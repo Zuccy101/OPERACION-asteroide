@@ -1429,6 +1429,6 @@ function restartSequence() {
   runmenu = true;
   musicLibrary[1].stop();
   musicLibrary[1].setVolume(musicvol);
-  musicLibrary[0].loop();
+  startMusic();
   menuButtons(); 
 }
