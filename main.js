@@ -19,11 +19,16 @@ let lAstButton;
 let rAstButton;
 let lShipButton;
 let rShipButton;
+let applyAstButton;
+let applyShipButton;
+let astApplied = true;
+let shipApplied = true;
 let fs = false;
 let customFont;
 let midUnlock = false;
 let hardUnlock = false;
 let expertUnlock = false;
+let specialUnlock = false;
 
 let musicSlider;
 let sfxSlider;
@@ -107,20 +112,24 @@ let animFiles = [
   ]
 ];
 
+let astSelect = 0;
 let astSkin = 0;
 let astLibrary = [];
 let astFiles = [
   "assets/skins/asteroidV1.png",
   "assets/skins/asteroidV2.png",
-  "assets/skins/asteroidV3.png"
+  "assets/skins/asteroidV3.png",
+  "assets/skins/asteroidV4.png"
 ];
 
+let shipSelect = 0;
 let shipSkin = 0;
 let shipLibrary = [];
 let shipFiles = [
   "assets/skins/spaceshipV1.png",
   "assets/skins/spaceshipV2.png",
-  "assets/skins/spaceshipV3.png"
+  "assets/skins/spaceshipV3.png",
+  "assets/skins/spaceshipV4.png"
 ]
 
 let sfxLibrary = [];
@@ -272,7 +281,7 @@ function draw() {
       fill("#54aad8");
       textAlign(CENTER, CENTER);
       noStroke();
-      text("MAYOR PUNTUACION: " + maxPoints, width / 2, 210);
+      text("MAYOR PUNTUACION: " + maxPoints, width / 2, 205);
     }
   }
 
@@ -308,31 +317,96 @@ function draw() {
   if (runaspects) {
     noSmooth();
     imageMode(CENTER);
+    if (!specialUnlock) {
+      if (shipSelect == 3) {
+        tint(0);
+      }
+    }
     image(
-      shipLibrary[shipSkin],
+      shipLibrary[shipSelect],
       width / 2,
-      height - 50 - shipLibrary[shipSkin].height,
+      height - shipLibrary[3].height,
       width / 2.5,
       height / 2.5,
       0,
       0,
-      shipLibrary[shipSkin].width,
-      shipLibrary[shipSkin].height,
+      shipLibrary[3].width,
+      shipLibrary[3].height,
       CONTAIN
     );
+    noTint();
 
+    if (!specialUnlock) {
+      if (astSelect == 3) {
+        tint(0);
+      }
+    }
     image(
-      astLibrary[astSkin],
+      astLibrary[astSelect],
       width / 2,
-      height - 200 - shipLibrary[shipSkin].height - astLibrary[astSkin].height,
+      height - 190 - shipLibrary[3].height - astLibrary[astSelect].height,
       width / 3.5,
       height / 3.5,
       0,
       0,
-      astLibrary[astSkin].width,
-      astLibrary[astSkin].height,
+      astLibrary[0].width,
+      astLibrary[0].height,
       CONTAIN
     );
+    noTint();
+
+    if (astSelect != astSkin) {
+      astApplied = false;;
+      applyAstButton.html("APLICAR");
+      applyAstButton.style("color", "#54aad8");
+      applyAstButton.style("border", "2px solid #54aad8");
+    } else {
+      astApplied = true;
+      applyAstButton.html("APLICADO");
+      applyAstButton.style("color", "#193240");
+      applyAstButton.style("border", "solid #193240");
+    }
+    if (shipSelect != shipSkin) {
+      shipApplied = false;
+      applyShipButton.html("APLICAR");
+      applyShipButton.style("color", "#54aad8");
+      applyShipButton.style("border", "2px solid #54aad8");
+    } else {
+      shipApplied = true;
+      applyShipButton.html("APLICADO");
+      applyShipButton.style("color", "#193240");
+      applyShipButton.style("border", "solid #193240");
+    }
+    if (!specialUnlock) {
+      if (astSelect == 3) {
+        astApplied = true;
+        applyAstButton.html("BLOQUEADO");
+        applyAstButton.style("color", "#521c27");
+        applyAstButton.style("border", "2px solid #521c27");
+
+        fill("#521c27");
+        textAlign(CENTER, CENTER);
+        textSize(32);
+        text("ALCANZA", width / 2, height / 4 - 10);
+        text("50000", width / 2, height / 4 + 20);
+        text("PUNTOS", width / 2, height / 4 + 50);
+      }
+    } 
+    if (!specialUnlock) {
+      if (shipSelect == 3) {
+        astApplied = true;
+        applyShipButton.html("BLOQUEADO");
+        applyShipButton.style("color", "#521c27");
+        applyShipButton.style("border", "2px solid #521c27");
+
+        fill("#521c27");
+        textAlign(CENTER, CENTER);
+        textSize(32);
+        text("ALCANZA", width / 2, height - height / 4 - 10);
+        text("50000", width / 2, height - height / 4 + 20);
+        text("PUNTOS", width / 2, height - height / 4 + 50);
+      }
+    } 
   }
   
   if (runstart) {
@@ -347,7 +421,7 @@ function draw() {
     if (midUnlock) {
       fill("#54aad8");
       text("       -", width - width / 3 - 70, height / 3 + 9);
-      text("10-12 ANOS", width - width / 3 - 70, height / 3 + 20);
+      text("9-12 ANOS", width - width / 3 - 70, height / 3 + 20);
       text("SUMAR", width - width / 3 - 70, height / 3 + 50);
       text("RESTAR", width - width / 3 - 70, height / 3 + 80);
       text("MULTIPLICAR", width - width / 3 - 70, height / 3 + 110);
@@ -415,6 +489,8 @@ function clearScreen() {
     rShipButton.remove();
     lAstButton.remove();
     rAstButton.remove();
+    applyShipButton.remove();
+    applyAstButton.remove();
     runaspects = false;
   }
   if (runstart) {
@@ -573,6 +649,56 @@ function aspectMenu() {
   clearScreen();
   runaspects = true;
 
+  applyAstButton = createButton("APLICAR");
+  applyAstButton.parent("canvasParent");
+  applyAstButton.style("font-size", "36px");
+  applyAstButton.style("font-family", "PerfectDOSVGA437");
+  applyAstButton.style("color", "#193240");
+  applyAstButton.style("border", "solid #193240");
+  applyAstButton.style("text-align", "center");
+  textFont(customFont);
+  applyAstButton.style("background-color", "#02050d");
+  applyAstButton.style("border-radius", "2px");
+  applyAstButton.size(200, 60);
+  applyAstButton.position(width / 2 - 100, height / 10 - 30);
+  applyAstButton.mousePressed(() => {
+    if (astApplied) {
+      sfxLibrary[7].play();
+    } else {
+      if (astSelect == 3 && !specialUnlock) {
+        sfxLibrary[7].play(); 
+      } else {
+        sfxLibrary[0].play();
+        astSkin = astSelect;
+      }
+    }
+  });
+
+  applyShipButton = createButton("APLICAR");
+  applyShipButton.parent("canvasParent");
+  applyShipButton.style("font-size", "36px");
+  applyShipButton.style("font-family", "PerfectDOSVGA437");
+  applyShipButton.style("color", "#193240");
+  applyShipButton.style("border", "solid #193240");
+  applyShipButton.style("text-align", "center");
+  textFont(customFont);
+  applyShipButton.style("background-color", "#02050d");
+  applyShipButton.style("border-radius", "2px");
+  applyShipButton.size(200, 60);
+  applyShipButton.position(width / 2 - 100, height / 2 - 10);
+  applyShipButton.mousePressed(() => {
+    if (shipApplied) {
+      sfxLibrary[7].play();
+    } else {
+      if (shipSelect == 3 && !specialUnlock) {
+        sfxLibrary[7].play();
+      } else {
+        sfxLibrary[0].play();
+        shipSkin = shipSelect;
+      }
+    }
+  });
+
   lAstButton = createButton("<");
   lAstButton.parent("canvasParent");
   lAstButton.style("padding-bottom: 50px");
@@ -600,7 +726,7 @@ function aspectMenu() {
   rAstButton.style("background-color", "transparent");
   rAstButton.style("border", "none");
   rAstButton.size(30, 30);
-  rAstButton.position(width / 2 + 185, height - 200 - shipLibrary[shipSkin].height - astLibrary[astSkin].height);
+  rAstButton.position(width / 2 + 185, height - 200 - shipLibrary[shipSelect].height - astLibrary[astSelect].height);
   rAstButton.mousePressed(() => {
     sfxLibrary[0].play();
     skinScroll(true, "ast")
@@ -617,7 +743,7 @@ function aspectMenu() {
   lShipButton.style("background-color", "transparent");
   lShipButton.style("border", "none");
   lShipButton.size(30, 30);
-  lShipButton.position(width / 2 - 215, height - 50 - shipLibrary[shipSkin].height);
+  lShipButton.position(width / 2 - 215, height - shipLibrary[shipSelect].height);
   lShipButton.mousePressed(() => {
     sfxLibrary[0].play();
     skinScroll(false, "ship")
@@ -633,7 +759,7 @@ function aspectMenu() {
   rShipButton.style("background-color", "transparent");
   rShipButton.style("border", "none");
   rShipButton.size(30, 30);
-  rShipButton.position(width / 2 + 185, height - 50 - shipLibrary[shipSkin].height);
+  rShipButton.position(width / 2 + 185, height - shipLibrary[shipSelect].height);
   rShipButton.mousePressed(() => {
     sfxLibrary[0].play();
     skinScroll(true, "ship")
@@ -661,32 +787,32 @@ function aspectMenu() {
 function skinScroll(dir, object) {
   if (dir) {
     if (object == "ast") {
-      if (astSkin == astFiles.length -1) {
-        astSkin = 0;
+      if (astSelect == astFiles.length -1) {
+        astSelect = 0;
       } else {
-        astSkin ++;
+        astSelect ++;
       }
     }
     if (object == "ship") {
-      if (shipSkin == shipFiles.length -1) {
-        shipSkin = 0;
+      if (shipSelect == shipFiles.length -1) {
+        shipSelect = 0;
       } else {
-        shipSkin ++;
+        shipSelect ++;
       }
     }
   } else {
     if (object == "ast") {
-      if (astSkin == 0) {
-        astSkin = astFiles.length -1;
+      if (astSelect == 0) {
+        astSelect = astFiles.length -1;
       } else {
-        astSkin --;
+        astSelect --;
       }
     }
     if (object == "ship") {
-      if (shipSkin == 0) {
-        shipSkin = shipFiles.length -1;
+      if (shipSelect == 0) {
+        shipSelect = shipFiles.length -1;
       } else {
-        shipSkin --;
+        shipSelect --;
       }
     }
   }
@@ -708,6 +834,7 @@ function keyPressed() {
   }
   if (keyIsDown(CONTROL) === true && keyIsDown(119) === true) {
     expertUnlock = true;
+    specialUnlock = true;
     expertButton.style("color", "#54aad8");
     expertButton.style("border", "2px solid #54aad8");
   }
