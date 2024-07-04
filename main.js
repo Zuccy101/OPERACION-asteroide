@@ -200,8 +200,9 @@ async function setup() {
 }
 
 function startMusic() {
-  musicLibrary[0].loop();
+  musicLibrary[0].play();
 }
+
 function menuButtons() {
   if (runmenu) {
     startButton = createButton("COMENZAR");
