@@ -194,13 +194,12 @@ async function setup() {
   canvas.parent("canvasParent");
   runmenu = true;
   menuButtons();
-  startMusic();
-  
+  startMusic(); 
 
 }
 
 function startMusic() {
-  musicLibrary[0].play();
+  musicLibrary[0].loop();
 }
 
 function menuButtons() {
