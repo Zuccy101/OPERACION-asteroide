@@ -189,15 +189,19 @@ function preload() {
   print("SOUND FX LOADED");
 }
 
-function setup() {
+async function setup() {
   canvas = createCanvas(800, 600);
   canvas.parent("canvasParent");
   runmenu = true;
   menuButtons();
-  musicLibrary[0].loop();
+  startMusic();
+  
 
 }
 
+function startMusic() {
+  musicLibrary[0].loop();
+}
 function menuButtons() {
   if (runmenu) {
     startButton = createButton("COMENZAR");
