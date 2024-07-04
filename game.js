@@ -46,6 +46,7 @@ let climaxSetup = false;
 let prepShipY;
 let shipMaxY;
 let shipY;
+let shipYMult;
 let timeOut = false;
 let timerOut;
 let timerOutEnd;
@@ -61,7 +62,7 @@ let startx;
 let starty;
 let endx;
 let endy;
-let laserSkin = ["#3a86ff", "#ffbe0b", "#ff006e"]
+let laserSkin = ["#15dafb", "#70e000", "#ff006e", "#fb5607"]
 
 let combostate;
 let comboDrawTime;
@@ -111,6 +112,7 @@ function startValues() {
   prepareMaxTimer = 1000;
   prepShipY = 300;
   shipY = 300;
+  shipYMult = 1;
 
   timerOut = 0;
   timerOutEnd = 1000;
@@ -259,7 +261,7 @@ function gameDraw() {
         }
       }
     }
-    if (comboStreak > 0) {
+    if (comboStreak > 1) {
       if (!pointstate) {
         if (falloff < 28) {
           if (!pausegame) {
@@ -321,7 +323,7 @@ function gameDraw() {
             quickfall = 32;
           }
   
-          textSize(32 + comboStreak + offY - quickfall);
+          textSize(32 + comboStreak + offY * 1.25);
           if (comboStreak < 5) {
             fill("#54aad8");
           } else if (comboStreak < 10) {
@@ -331,7 +333,7 @@ function gameDraw() {
           }
           textAlign(CENTER, CENTER);
           noStroke();
-          text("+" + comboAdd + "!", 90, 90 /*+ (offY * 2)*/);
+          text("+" + comboAdd + "!", width / 2, 90);
           textAlign(CENTER, CENTER);
         }
       } else {
@@ -341,8 +343,10 @@ function gameDraw() {
       }
     } else if (pointstate) {
       if (comboDrawTime < comboDrawEnd) {
-        comboDrawTime += deltaTime;
-        offY = amplitude * sin((pointsY += deltaTime * (0.03 * 2)) * frequency);
+        if (!pausegame) {
+          comboDrawTime += deltaTime;
+          offY = amplitude * sin((pointsY += deltaTime * (0.03 * 2)) * frequency);
+        }
         falloff = 0;
       } else {
         quickfall = 0;
@@ -424,13 +428,16 @@ function gameDraw() {
       let newAnim = new Anim(asteroids[i].x, asteroids[i].y, asteroids[i].size, 0);
       animList.push(newAnim);
 
+      explosionRate = map(asteroids[i].size, 1, 200, 1.4, 0.8);
+      sfxLibrary[3].rate(explosionRate);
+
       asteroids.splice(i, 1);
       comboAdd = 10;
       comboStreak = 0;
       readyToUpdate = true;
       updateButtons();
       if (hp > 0) {
-        updateHealth(-25);
+        updateHealth(-20);
       }
     }
   }
@@ -462,20 +469,27 @@ function gameDraw() {
           shipLibrary[shipSkin].height,
           CONTAIN
         );
-        if (hp > 0) {
-          strokeWeight(4);
-          stroke(hpColor);
-          fill(2, 5, 13);
-          rectMode(CORNER);
-          rect(width / 2 - 125, height - 87, hp * 2.5, 25);
-        }
       } 
-      animationManager();
     }
   }
   if (gameOver && rungame) {
     deathSequence();
   }
+  if (rungame) {
+    animationManager();
+  }
+  if (climaxSetup) {
+    if (!gameOver) {
+      if (hp > 0) {
+        strokeWeight(4);
+        stroke(hpColor);
+        fill(2, 5, 13);
+        rectMode(CORNER);
+        rect(width / 2 - 125, height - 87, hp * 2.5, 25);
+      }
+    }
+  }
+
   if (pausegame) {
     background(0, 0, 0, 180);
     if (runsettings) {
@@ -505,36 +519,41 @@ class Anim {
     this.timer = 0;
     this.currentFrame = 0;
     this.animID = animID;
+    if (this.animID == 0) {
+      this.rate = map(this.size, 1, 200, 50, 80);
+    } else {
+      this.rate = 50;
+    }
   }
 
   play() {
+    if (this.currentFrame < animations[this.animID].length) {
+      if (!pausegame) {
+        this.timer += deltaTime;
+      }
 
-    this.timer += deltaTime;
-    image(
-      animations[this.animID][this.currentFrame], 
-      this.x, this.y,
-      this.size * 1.25,
-      this.size * 1.25
-    )
-
-    if (this.timer > 80) {
-      this.timer = 0
-      this.currentFrame++
+      imageMode(CENTER);
+      image(
+        animations[this.animID][this.currentFrame],
+        this.x, this.y,
+        this.size * 1.25,
+        this.size * 1.25
+      );
+      
+      if (this.timer > this.rate) {
+        this.timer = 0;
+        this.currentFrame++;
+      }
     }
   }
 }
 
 function animationManager() {
-  let anim;
+  for (let i = animList.length - 1; i >= 0; i--) {
+    animList[i].play();
 
-  if (animList.length > 0) {
-    for(let i = 0; i < animations[i].length;) {
-      anim = animList[i];
-      if (anim.currentFrame < animations[anim.animID].length) {
-        anim.play()
-      } else {
-        animList.splice(i, 1);
-      }
+    if (animList[i].currentFrame >= animations[animList[i].animID].length) {
+      animList.splice(i, 1);
     }
   }
 }
@@ -612,6 +631,7 @@ function pauseMenu() {
     clearGame();
     kiai = false;
     kiaiMode();
+    musicLibrary[1].setVolume(musicvol);
     restartSequence();
     resumeButton.remove();
     configButton2.remove();
@@ -929,7 +949,11 @@ function operationMatrix(diff) {
 function updateHealth(value) {
   if (hp + value <= 0) {
     hp = 0;
+    sfxLibrary[5].rate(explosionRate * 0.6);
     sfxLibrary[5].play();
+    let newAnim = new Anim(width / 2, height - 150, shipLibrary[shipSkin].width * 2, 1);
+    animList.push(newAnim);
+    musicLibrary[1].setVolume(musicvol * 0.4);
     clearGame();
   } else {
     if (value < 0) {
@@ -938,8 +962,10 @@ function updateHealth(value) {
     hp += value;
   }
 
-  if (hp <= 50) {
+  if (hp <= 33) {
     hpColor = "#c2455f";
+  } else if (hp <= 66) {
+    hpColor = "#ffbe0b";
   } else {
     hpColor = "#54aad8";
   }
@@ -974,7 +1000,7 @@ function combo() {
     points = 100;
     pointstate = true;;
   }
-  if (comboStreak == 3) {
+  if (comboStreak == 10) {
     kiai = true;
     kiaiMode();
   }
@@ -982,7 +1008,7 @@ function combo() {
 
 function kiaiMode() {
   if (kiai) {
-    //sfxLibrary[10].rate(0.5);
+    sfxLibrary[10].rate(0.8);
     sfxLibrary[10].play();
     timerOutEnd = spawnMaxTimer / 50;
     asteroids.splice(0, asteroids.length);
@@ -1052,6 +1078,7 @@ function checkValues(buttonIndex) {
             shootLaser = true;
           } else {
             sfxLibrary[7].play();
+            comboDrawEnd = 1000;
             comboStreak = 0;
             missedAttempts();
             buttons[buttonIndex].style("color", "#c2455f");
@@ -1070,6 +1097,30 @@ function checkValues(buttonIndex) {
   }
 }
 
+let strokeMax = 100;
+let opacityGain = 1;
+let strokeGain = strokeMax;
+let res = 50;
+
+function laserGlow() {
+  
+  let laser = color(laserSkin[shipSkin])
+
+  for (let i = 0; i < res; i++) {
+    
+    strokeWeight(strokeGain);
+
+    laser.setAlpha(opacityGain)
+    stroke(laser);
+    line(startx, starty, endx, endy);
+    
+    opacityGain *= Math.pow(255, 1 / res);
+    strokeGain /= Math.pow(strokeMax, 1 / (res / 1.75));
+  } 
+  opacityGain = 1;
+  strokeGain = strokeMax;
+}
+
 function laserBeam() {
   if (shootLaser) {
 
@@ -1080,10 +1131,10 @@ function laserBeam() {
       if (animTimer < animEnd) {
         if (!pausegame) {
           animTimer += (deltaTime / 1000);
-          strokeWeight(3);
-          stroke(laserSkin[shipSkin]);
-          line(startx, starty, endx, endy);
+          //strokeCap(SQUARE);
+          laserGlow();
           noStroke();
+          //strokeCap(ROUND);
     
           let rate = 0.09;
           startx = lerp(startx, asteroids[0].x, rate * (1 + laserLength));
@@ -1235,6 +1286,13 @@ function prepareSequence() {
 
   if (prepCount > 0) {
     
+    fill("#c2455f");
+    textSize(28);
+    textAlign(CENTER, CENTER);
+    text("RESOLVE LAS CUENTAS,", width / 2, height - 430 + (prepShipY));
+    text("APRETA LOS BOTONES,", width / 2, height - 400 + (prepShipY));
+    text("Y QUE LOS ASTEROIDES NO TE FRENEN...", width / 2, height - 370 + (prepShipY));
+
     noSmooth();
     imageMode(CENTER);
     image(
@@ -1269,6 +1327,7 @@ function prepareSequence() {
   } else {
     if (prepCount <= 3 && prepCount >= 1) {
       fill("#54aad8");
+      textSize(36);
       text(prepCount, width / 2, height / 2 - 200);
     }
   }
@@ -1346,11 +1405,10 @@ function deathSequence() {
         CONTAIN
       );
     if (shipY < height + shipLibrary[shipSkin].height) {
-      shipY *= 1.005;
+      shipYMult += 0.0001;
+      shipY *= shipYMult;
     }
-  } else {
-    
-  }
+  } 
 }
 
 function restartSequence() {
@@ -1362,6 +1420,7 @@ function restartSequence() {
   }
   if (level == 3 && lastPoints > 50000) {
     expertUnlock = true;
+    specialUnlock = true;
   }
   if (lastPoints > maxPoints) {
     maxPoints = lastPoints;
@@ -1369,6 +1428,7 @@ function restartSequence() {
   prepCount = 7;
   runmenu = true;
   musicLibrary[1].stop();
+  musicLibrary[1].setVolume(musicvol);
   musicLibrary[0].loop();
   menuButtons(); 
 }
